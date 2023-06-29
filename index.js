@@ -96,7 +96,7 @@ class TuyaLan {
             } catch(ex) {}
 
             //if (!/^[0-9a-f]+$/i.test(device.id)) return this.log.error('%s, id for %s, is not a valid id.', device.id, device.name || 'unnamed device');
-            if (!/^[0-9a-f]+$/i.test(device.key)) return this.log.error('%s, key for %s (%s), is not a valid key.', device.key.replace(/.{4}$/, '****'), device.name || 'unnamed device', device.id);
+            //if (!/^[0-9a-f]+$/i.test(device.key)) return this.log.error('%s, key for %s (%s), is not a valid key.', device.key.replace(/.{4}$/, '****'), device.name || 'unnamed device', device.id);
             if (!{16:1, 24:1, 32: 1}[device.key.length]) return this.log.error('%s, key for %s (%s), doesn\'t have the expected length.', device.key.replace(/.{4}$/, '****'), device.name || 'unnamed device', device.id);
             if (!device.type) return this.log.error('%s (%s) doesn\'t have a type defined.', device.name || 'Unnamed device', device.id);
             if (!CLASS_DEF[device.type.toLowerCase()]) return this.log.error('%s (%s) doesn\'t have a valid type defined.', device.name || 'Unnamed device', device.id);
@@ -117,7 +117,7 @@ class TuyaLan {
 
                 connectedDevices.push(config.id);
 
-                this.log.info('Discovered %s (%s) identified as %s (%s)', devices[config.id].name, config.id, devices[config.id].type, config.version);
+                this.log.info('Discovered %s (%s) identified as %s (%s)', devices[config.id].name, config.id, devices[config.id].type, config.ip);
 
                 const device = new TuyaAccessory({
                     ...devices[config.id], ...config,
@@ -154,7 +154,7 @@ class TuyaLan {
                     this.log.warn('Failed to discover %s (%s) in time but will keep looking.', devices[deviceId].name, deviceId);
                 }
             });
-        }, 60000);
+        }, 10000);
     }
 
     registerPlatformAccessories(platformAccessories) {
@@ -162,8 +162,7 @@ class TuyaLan {
     }
 
     configureAccessory(accessory) {
-        // also checks null objects or empty config - this._expectedUUIDs
-        if (accessory instanceof PlatformAccessory && this._expectedUUIDs && this._expectedUUIDs.includes(accessory.UUID)) {
+        if (accessory instanceof PlatformAccessory && this._expectedUUIDs.includes(accessory.UUID)) {
             this.cachedAccessories.set(accessory.UUID, accessory);
             accessory.services.forEach(service => {
                 if (service.UUID === Service.AccessoryInformation.UUID) return;
@@ -210,7 +209,7 @@ class TuyaLan {
         if (!accessory) {
             accessory = new PlatformAccessory(deviceConfig.name, deviceConfig.UUID, Accessory.getCategory(Categories));
             accessory.getService(Service.AccessoryInformation)
-                .setCharacteristic(Characteristic.Manufacturer, deviceConfig.manufacturer || "Unknown")
+                .setCharacteristic(Characteristic.Manufacturer, (deviceConfig.manufacturer || "Unknown").trim())
                 .setCharacteristic(Characteristic.Model, deviceConfig.model || "Unknown")
                 .setCharacteristic(Characteristic.SerialNumber, deviceConfig.id.slice(8));
 
